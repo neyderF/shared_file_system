@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerIndex {
 
@@ -19,16 +21,21 @@ public class ServerIndex {
     private ObjectInputStream objectReader;
 
 
+    private HashMap<String, String[]> peers;
 
-    private ArrayList<Client> clients;
+    private boolean clientConnected;
+    private String code = " ";
+    private String value = "";
 
-    private  boolean clientConnected;
-
+    private String peerHost;
+    private int initPort;
 
     public ServerIndex(int maxClientsFile) {
-        clients = new ArrayList<>();
+        this.peers = new HashMap<>();
+        this.initPort = 6000;
         this.maxClientsFile = maxClientsFile;
-        clientConnected =false;
+        this.clientConnected = false;
+        this.peerHost = "";
 
         runServer();
     }
@@ -43,15 +50,16 @@ public class ServerIndex {
             while (true) {
                 System.out.println("El servidor esta esperando por un cliente...");
                 serverSideSocket = listener.accept();
-                System.out.println("Un cliente se ha conectado...");
+                peerHost = serverSideSocket.getRemoteSocketAddress().toString().split(":")[0].substring(1);
+                System.out.println("Se ha conectado el cliente "+ peerHost);
 
                 try {
 
                     createStreams();
-                    clientConnected =true;
                     executeProtocol();
-                    clientConnected =false;
+                    System.out.println("Un cliente se ha desconectado");
                     writer.println("EXIT");
+
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -86,94 +94,96 @@ public class ServerIndex {
 
     private void executeProtocol() throws IOException {
 
+        while (!code.equals("EXIT")) {
 
-        String code =" ";
-
-        while (clientConnected&& !code.equals("EXIT")) {
-            String userMessage[] = reader.readLine().split(" :");
-            code = userMessage[0];
-            String name = userMessage[1];
+            String userMessage = reader.readLine();
+            value = "";
+            if (userMessage.contains(":")) {
+                String userMessage2[] = userMessage.split(":");
+                code = userMessage2[0];
+                value = userMessage2[1];
+            } else {
+                code = userMessage;
+            }
 
             if (code.equals("REGISTER")) {
-                writer.println("OK");
-                try {
-                    if (!searchClient(name)) {
-                        Client newClient = (Client) objectReader.readObject();
-                        clients.add(newClient);
-                        writer.println("Registro exitoso");
-                        startDataSend();
 
-                    } else {
-                        writer.println("Este cliente ya existe, pruebe con otro nombre");
-                    }
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
+                if (!searchClient(value)) {
 
-            } else if (code.contains("LOGIN")) {
+                    String[] data = new String[2];
+                    initPort++;
+                    data[0] = peerHost + ":" + initPort;
 
+                    writer.println("Ingrese la lista de archivos que desea compartir separados por comas:");
 
-                if (searchClient(name)) {
-                    writer.println("Bienvenido " + name);
-
-                    startDataSend();
+                    String files = reader.readLine();
+                    data[1] = files;
+                    peers.put(value, data);
+                    writer.println("Registro exitoso, la conexion asignada fue: " + data[0]);
+                    clientConnected = true;
 
                 } else {
-                    writer.println("El Cliente" + name + " no exixte registrese por favor");
+                    writer.println("Este cliente ya existe, pruebe con otro nombre");
                 }
 
+            } else if (code.equals("LOGIN")) {
+
+                if (searchClient(value)) {
+                    System.err.println(peers.get(value)[0]);
+                    writer.println("Bienvenido " + value +" "+ peers.get(value)[0]);
+                    clientConnected = true;
+
+                } else {
+                    writer.println("El cliente " + value + " no existe");
+                }
+
+            } else if (code.equals("SEARCH")) {
+
+                if (clientConnected) {
+
+                    //writer.println("Modo busqueda para cliente ");
+                    System.out.println("BUSCAR: " + value);
+                    ArrayList<String> result = searchFile(value);
+                    objectWriter.writeObject(result);
+                    objectWriter.flush();
+
+                } else {
+                    writer.println("Debe autentificarse primero");
+                }
+            } else if (!code.equals("EXIT")) {
+                writer.println("Comando no reconocido");
             }
         }
 
-
-    }
-
-    private void startDataSend() throws IOException {
-
-        String code = "";
-        String searchFileName="";
-        while (!code.equals("EXIT")){
-
-            String userMessage[] = reader.readLine().split(" :");
-            code=userMessage[0];
-            searchFileName = userMessage[1];
-
-            ArrayList<String>result=searchFile(searchFileName);
-            objectWriter.writeObject(result);
-
-
-        }
-
+        clientConnected = false;
+        code = "";
     }
 
 
-    public ArrayList<String> searchFile(String searchFileName){
-        int count=0;
-        ArrayList<String>searchResult=new ArrayList<>();
-        for (Client client: clients) {
-            for (String file:
-                    client.listSharedFiles()) {
-                if(count!=maxClientsFile){
-                    if (file.equals(searchFileName)){
-                        searchResult.add(client.getHOST()+":"+client.getPort());
-                        count++;
+    public ArrayList<String> searchFile(String searchFileName) {
+        ArrayList<String> searchResult = new ArrayList<>();
+        if (!peers.isEmpty()) {
+            for (Map.Entry<String, String[]> entry :
+                    peers.entrySet()) {
+                String files[] = entry.getValue()[1].split(",");
+
+                for (String file :
+                        files) {
+                    if (file.equals(searchFileName) && searchResult.size() < maxClientsFile) {
+                        searchResult.add(entry.getKey() + "@" + entry.getValue()[0]);
                     }
                 }
             }
+
         }
 
-        return  searchResult;
+        return searchResult;
 
     }
-    public boolean searchClient(String name){
-        boolean exist=false;
-        for (Client c :clients) {
-            if(c.equals(name)){
-                exist=true;
-            }
-        }
 
-        return  exist;
+    public boolean searchClient(String name) {
+
+        return peers.containsKey(name);
 
     }
 

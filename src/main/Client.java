@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,8 +117,14 @@ public class Client implements Serializable {
                         // con cada if se recive la respuesta del servidor de diferente manera
                         if (clientPrompt.split(":")[0].equals("REGISTER")) {
 
+                            //File temp=new File(rootDir+clientPrompt.split(":")[0]);
+
+
                             serverResponse = reader.readLine();//el servidor me pide los archivos
                             if (serverResponse.contains("archivos")) {
+
+
+
                                 System.out.println("Servidor: " + serverResponse);
                                 clientPrompt = new Scanner(System.in).nextLine();// ingreso los archivos
                                 writer.println(clientPrompt);

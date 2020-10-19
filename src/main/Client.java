@@ -163,8 +163,10 @@ public class Client implements Serializable {
                                 userName = "(" + dataConnection[1] + ")";
 
                                 //inicia el servidor del peer en segundo plano
-                                localFileServer = new ServerFileTransfer(host, port, rootDir, dataConnection[1], this);
-                                localFileServer.start();
+                                if(localFileServer==null) {
+                                    localFileServer = new ServerFileTransfer(host, port, rootDir, dataConnection[1], this);
+                                    localFileServer.start();
+                                }
 
 
                                 try {
@@ -269,9 +271,12 @@ public class Client implements Serializable {
                 break;
             } else {
                 System.out.println("No se pudo conectar con " + connectionData);
+
+
             }
-            //peerClient = null;
+
         }
+
 
 
     }
@@ -348,7 +353,9 @@ public class Client implements Serializable {
 
         int result = 0;
 
+
         if (!statistics.isEmpty()) {
+
             for (Map.Entry<String, ArrayList<String>> entry :
                     statistics.entrySet()) {
                 ArrayList<String> requests = entry.getValue();
@@ -356,7 +363,9 @@ public class Client implements Serializable {
                 for (String req :
                         requests) {
                     String ext = (req.replace(".", ",")).split(",")[1];
+
                     if (ext.equals(fileExt)) {
+
                         result++;
                     }
                 }

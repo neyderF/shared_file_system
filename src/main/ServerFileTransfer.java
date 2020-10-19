@@ -97,7 +97,7 @@ public class ServerFileTransfer extends Thread {
 
 
                     // se registra la solicitud al servidor
-                    String fileSearch = filename;
+                    String fileSearch = name.split(",")[1];
 
                     if(!client.getStatistics().containsKey(actualClient)){
                         client.getStatistics().put(actualClient,new ArrayList<String>());

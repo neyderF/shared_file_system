@@ -1,18 +1,19 @@
-package model;
+package main;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ServerFileTransfer extends Thread {
+    private Client client;
     private ServerSocket listener;
     private Socket serverSideSocket;
     private String peerHost;
     private int port;
 
     private BufferedReader reader;
-    private BufferedInputStream fromNetwork;
-    private BufferedOutputStream toFile;
+
     private String filename;
     private boolean stop;
     private String rootDir;
@@ -26,16 +27,29 @@ public class ServerFileTransfer extends Thread {
     private BufferedOutputStream toNetwork;
     // Objeto para manejar el archivo a enviar
     private File localFile;
+    private String actualClient;
 
-    public ServerFileTransfer(String host, int port, String rooDir, String userName) {
+    public ServerFileTransfer(String host, int port, String rooDir, String userName, Client client) {
         this.port = port;
         this.peerHost = host;
         this.stop = false;
         this.rootDir = rooDir;
-        this.userName = userName;
-
+        this.userName = userName;// es el peer dueño del servidor no el nombre del cliente que busca
+        this.client = client;//este tambien es el dueño del servidor
+        this.actualClient="";
 
     }
+
+    /**
+     * Metodo que ejcuta el protocolo de la transferencia de archivos del lado del servidor
+     * Cada cliente tiene un servidor de archivos que se ejecuta cuando el cliente se autentifica con el servidor indice
+     *
+     * Una vez se acepta una conexión se ejecuta el protocolo:
+     *  se recibe el nombre del archivo
+     *  y posteriormente se le envia al cliente el tamaño del archivo,
+     *  luego se procede a enviar el archivo en bloqyes de 1024 bytes
+     *
+     */
 
     @Override
     public void run() {
@@ -48,17 +62,20 @@ public class ServerFileTransfer extends Thread {
             while (!stop) {
                 serverSideSocket = listener.accept();
                 String clientHost = serverSideSocket.getRemoteSocketAddress().toString().split(":")[0].substring(1);
-                System.out.println("Se ha conectado el cliente " + clientHost);
+
 
                 try {
 
                     reader = new BufferedReader(new InputStreamReader(serverSideSocket.getInputStream()));
                     writer = new PrintWriter(serverSideSocket.getOutputStream(), true);
-                    //llega el nombre del archivo que el cliente esta buscando
-                    String filename = rootDir + userName + "/Compartida/" + reader.readLine();
+                    //llega el nombre del archivo que el cliente esta buscando y el nombre del cliente
+                    String name = reader.readLine();
+                    System.out.println("El cliente " + name.split(",")[0]+" esta solicitando el archivo"+name.split(",")[1] );
+                    String filename = rootDir + userName + "/Compartida/" + name.split(",")[1];
 
 
                     localFile = new File(filename);
+
 
                     long size = localFile.length();
                     writer.println("Size:" + size);
@@ -78,32 +95,16 @@ public class ServerFileTransfer extends Thread {
                     fromFile.close();
 
 
-/**
- filename = "src/destino/" + filename.split("/")[2];
+                    // se registra la solicitud al servidor
+                    String fileSearch = filename;
 
- fromNetwork = new BufferedInputStream(serverSideSocket.getInputStream());
- toFile = new BufferedOutputStream(new FileOutputStream(filename));
-
- String sizeString = reader.readLine();
- long size = Long.parseLong(sizeString.split(":")[1]);
-
- System.out.println(size);
- // se recibe el archivo en bloques de 512 bytes
- byte[] receivedData = new byte[512];
- int in;
- long remainder = size;
- while ((in = fromNetwork.read(receivedData)) != -1) {
-
- toFile.write(receivedData, 0, in);
- remainder -= in;
- if (remainder == 0)
- break;
- }
- **/
+                    if(!client.getStatistics().containsKey(actualClient)){
+                        client.getStatistics().put(actualClient,new ArrayList<String>());
+                    }
+                    client.getStatistics().get(actualClient).add(fileSearch);
 
 
-                    //reader.close();
-                    //toFile.close();
+
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -117,7 +118,10 @@ public class ServerFileTransfer extends Thread {
 
     }
 
+
     public void setStop() {
         this.stop = true;
     }
+
+
 }

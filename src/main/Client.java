@@ -138,6 +138,7 @@ public class Client implements Serializable {
 
                             try {
                                 ArrayList<String> resultList = (ArrayList<String>) objectReader.readObject();
+
                                 if (!resultList.isEmpty()) {
                                     System.out.println("Servidor: el archivo lo tiene:" + resultList.toString());
                                     //se lanza el cliente de transferencia de archivos en PRIMEER PLANO
@@ -198,6 +199,7 @@ public class Client implements Serializable {
                 clientSideSocket = new Socket(SERVER_INDEX_HOST, 5000);
                 createStreams();
                 System.out.println("Se ha conectado al servidor índice");
+                userName="";
             }else{
                 System.out.println("Comando local no reconocido");
             }

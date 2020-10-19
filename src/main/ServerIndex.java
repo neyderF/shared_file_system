@@ -70,10 +70,19 @@ public class ServerIndex {
                     writer.println("EXIT");
 
 
+
+
                 } catch (IOException e) {
                     //e.printStackTrace();
                     System.out.println("El cliente se ha desconectado repentinamente");
+                    clientConnected = false;
+                    actualClient = "";
+                    code = "";
                 }
+
+                reader.close();
+                writer.close();
+                objectWriter.close();
             }
         } catch (IOException e) {
             System.err.println("ERROR en el servidor indice");
@@ -201,7 +210,8 @@ public class ServerIndex {
 
                 for (String file :
                         files) {
-                    if (file.equals(searchFileName) && searchResult.size() < maxClientsFile) {
+                    if (file.trim().equals(searchFileName.trim()) && searchResult.size() < maxClientsFile) {
+
                         searchResult.add(entry.getKey() + "@" + entry.getValue()[0]);
                     }
                 }

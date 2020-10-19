@@ -71,7 +71,7 @@ public class ServerFileTransfer extends Thread {
                     //llega el nombre del archivo que el cliente esta buscando y el nombre del cliente
                     String name = reader.readLine();
                     actualClient=name.split(",")[0];
-                    System.out.println("El cliente " + actualClient +" esta solicitando el archivo"+name.split(",")[1] );
+                    System.out.println("El cliente " + actualClient +" esta solicitando el archivo "+name.split(",")[1] );
                     String filename = rootDir + userName + "/Compartida/" + name.split(",")[1];
 
 
@@ -114,7 +114,8 @@ public class ServerFileTransfer extends Thread {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+
         }
 
     }

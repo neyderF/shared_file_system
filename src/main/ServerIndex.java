@@ -73,7 +73,7 @@ public class ServerIndex {
 
 
                 } catch (IOException e) {
-                    //e.printStackTrace();
+
                     System.out.println("El cliente se ha desconectado repentinamente");
                     clientConnected = false;
                     actualClient = "";
@@ -139,13 +139,13 @@ public class ServerIndex {
                     initPort++;
                     data[0] = peerHost + ":" + initPort;
 
-                    writer.println("Ingrese la lista de archivos que desea compartir separados por comas:");
+                    writer.println("Lista de archivos que se van a compartir:");
 
                     String files = reader.readLine();
                     data[1] = files;
                     peers.put(value, data);
-                    writer.println("Registro exitoso, la conexion asignada fue: " + data[0]);
-                    //clientConnected = true;
+                    writer.println("Registro exitoso, la conexión asignada fue: " + data[0]);
+
                     statistics.put(value, new ArrayList<String>());
 
                 } else {
@@ -155,7 +155,7 @@ public class ServerIndex {
             } else if (code.equals("LOGIN")) {
 
                 if (searchClient(value)) {
-                    System.err.println(peers.get(value)[0]);
+
                     writer.println("Bienvenido " + value + " " + peers.get(value)[0]);
                     actualClient = value;
                     clientConnected = true;
@@ -168,14 +168,12 @@ public class ServerIndex {
 
                 if (clientConnected) {
 
-                    //writer.println("Modo busqueda para cliente ");
                     System.out.println("BUSCAR: " + value);
                     ArrayList<String> result = searchFile(value);
                     objectWriter.writeObject(result);
                     objectWriter.flush();
 
                     String fileSearch = value + "," + !result.isEmpty();
-                    System.err.println(statistics.size());
                     statistics.get(actualClient).add(fileSearch);
 
                 } else {

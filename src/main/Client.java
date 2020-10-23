@@ -1,5 +1,6 @@
 package main;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -102,6 +103,7 @@ public class Client implements Serializable {
 
                 System.out.print(userName + "Ingrese un mensaje para el servidor: ");
                 clientPrompt = new Scanner(System.in).nextLine();
+                //clientPrompt= JOptionPane.showInputDialog(userName+" Ingrese su mensaje para el servidor");
 
                 if (clientPrompt.contains("EST")) { // entra si esta autentificado y quiere conocer las estadisticas
                     if (userName.length() > 1) {
@@ -117,18 +119,23 @@ public class Client implements Serializable {
                         // con cada if se recive la respuesta del servidor de diferente manera
                         if (clientPrompt.split(":")[0].equals("REGISTER")) {
 
-                            //File temp=new File(rootDir+clientPrompt.split(":")[0]);
 
 
                             serverResponse = reader.readLine();//el servidor me pide los archivos
                             if (serverResponse.contains("archivos")) {
-
-
-
                                 System.out.println("Servidor: " + serverResponse);
-                                clientPrompt = new Scanner(System.in).nextLine();// ingreso los archivos
-                                writer.println(clientPrompt);
 
+                                File temp=new File(rootDir+clientPrompt.split(":")[1]+"/Compartida");
+                                String files="";
+                                for (String t:
+                                        temp.list()) {
+                                    files+=t+",";
+                                }
+
+                                files=files.substring(0,files.length()-1);
+                                System.out.println("-> "+files);
+
+                                writer.println(files);
                                 serverResponse = reader.readLine(); // me devuelve registro exitoso
 
                             }
@@ -186,6 +193,8 @@ public class Client implements Serializable {
             }
             System.out.print(userName + "Ingrese un mensaje local: ");
             clientLocalPrompt = new Scanner(System.in).nextLine();
+            //clientLocalPrompt= JOptionPane.showInputDialog(userName+ " " +
+             //       "Ingrese su mensaje local");
             if(clientLocalPrompt.contains("EST")){// entra si NO esta autentificado y quiere conocer las estadisticas o conectarse al servidor
                 if (userName.length() > 1) {
 
@@ -196,7 +205,7 @@ public class Client implements Serializable {
                 }
             }else if(clientLocalPrompt.equals("CONNECT")){
                 serverResponse="";
-                //intenta conectarse al servidor
+                //intenta conectarse al servidor indice
 
                 clientSideSocket = new Socket(SERVER_INDEX_HOST, 5000);
                 createStreams();
@@ -224,7 +233,7 @@ public class Client implements Serializable {
             if (command[0].equals("EST1")) { // por nombre de archivo
 
                 try {
-                    response = "El cliente " + command[1] + " ha realizado " + requestClientName(command[1]) + " solicitudes al servidor índice";
+                    response = "El cliente " + command[1] + " ha realizado " + requestClientName(command[1]) + " solicitudes a este servidor";
                 } catch (NullPointerException e) {
                     response = "el cliente nunca se ha conectado a este servidor";
 
@@ -267,7 +276,7 @@ public class Client implements Serializable {
             System.out.println("Conectando con " + connectionData);
             peerClient.startConnection(fileName, connection[0], Integer.parseInt(connection[1]), rootDir);
             if (!peerClient.connectionRefused) {
-                System.out.println("EXITO el archivo se transfirio correctamente, revise su carpeta de descargas");
+                System.out.println("EXITO el archivo se transfirió correctamente, revise su carpeta de descargas");
                 break;
             } else {
                 System.out.println("No se pudo conectar con " + connectionData);

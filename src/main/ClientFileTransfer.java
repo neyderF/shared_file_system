@@ -16,7 +16,7 @@ public class ClientFileTransfer {
     private String userName;
 
     public ClientFileTransfer(String userName) {
-        System.out.println("Cliente " + userName + " FT en linea");
+        //System.out.println("Cliente " + userName + " FT en linea");
         this.userName = userName;
     }
 
